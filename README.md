@@ -31,10 +31,11 @@ A real-time AI-powered medical interview assistant that:
 - Click "Create API key"
 - Copy API key
 
-### 2. Navigate to project
+### 2. Clone & Navigate to Project
 
 ```bash
-cd /Users/cherianmathew/Documents/Projects/HealthAI
+git clone https://github.com/cherianmatt/healthAI.git
+cd healthAI
 ```
 
 ### 3. Configure Environment
@@ -50,8 +51,8 @@ FLASK_DEBUG=True
 ### 4. Install Dependencies
 
 ```bash
-# Python
-.venv/bin/pip install -r backend/requirements.txt
+# Python (using virtual environment)
+pip install -r backend/requirements.txt
 
 # Frontend
 cd frontend
@@ -61,8 +62,8 @@ npm install
 ### 5. Run Backend (Terminal 1)
 
 ```bash
-cd /Users/cherianmathew/Documents/Projects/HealthAI/backend
-/Users/cherianmathew/Documents/Projects/HealthAI/.venv/bin/python app.py
+cd backend
+python app.py
 ```
 
 Expected output:
@@ -74,7 +75,7 @@ Expected output:
 ### 6. Run Frontend (Terminal 2)
 
 ```bash
-cd /Users/cherianmathew/Documents/Projects/HealthAI/frontend
+cd frontend
 npm start
 ```
 
@@ -82,9 +83,9 @@ Automatic browser opens: http://localhost:3000
 
 ### 7. Use the Application
 
-1. Click **"🎤 Start Recording"** button
+1. Click **"Start Recording"** button
 2. Speak as a patient: *"I have a severe headache for 3 days and feel nauseous"*
-3. Click **"⏹ Stop Recording"** when done
+3. Click **"Stop Recording"** when done
 4. Wait 1-2 seconds for results
 5. View:
    - **Current Transcript**: Latest recording
