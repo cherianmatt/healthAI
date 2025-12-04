@@ -22,7 +22,7 @@ A complete, functional real-time medical interview assistant consisting of:
 ## File Structure Created
 
 ```
-/Users/cherianmathew/Documents/Projects/HealthAI/
+project-root/
 ├── backend/
 │   ├── app.py                          (700+ lines, all endpoints)
 │   ├── requirements.txt                (8 dependencies)
@@ -62,7 +62,7 @@ A complete, functional real-time medical interview assistant consisting of:
 ### Step 2: Configure Environment (2 minutes)
 
 ```bash
-cd /Users/cherianmathew/Documents/Projects/HealthAI
+cd project-root
 ```
 
 Edit `backend/.env`:
@@ -77,7 +77,8 @@ FLASK_DEBUG=True
 
 ```bash
 # Install Python packages
-/Users/cherianmathew/Documents/Projects/HealthAI/.venv/bin/pip install -r backend/requirements.txt
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -r backend/requirements.txt
 
 # Install Node packages
 cd frontend
@@ -88,8 +89,9 @@ npm install
 
 **Terminal 1 - Backend:**
 ```bash
-cd /Users/cherianmathew/Documents/Projects/HealthAI/backend
-/Users/cherianmathew/Documents/Projects/HealthAI/.venv/bin/python app.py
+cd backend
+source ../.venv/bin/activate  # or ../.venv\Scripts\activate on Windows
+python app.py
 ```
 
 Expected output:
@@ -100,7 +102,7 @@ Expected output:
 
 **Terminal 2 - Frontend:**
 ```bash
-cd /Users/cherianmathew/Documents/Projects/HealthAI/frontend
+cd frontend
 npm start
 ```
 
