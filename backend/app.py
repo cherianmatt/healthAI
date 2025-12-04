@@ -20,7 +20,30 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+
+# CORS configuration - restrict to localhost and frontend domain
+if os.getenv('FLASK_ENV') == 'production':
+    # Production: restrict to specific domains
+    CORS(app, resources={
+        r"/*": {"origins": [os.getenv('ALLOWED_ORIGIN', 'https://yourdomain.com')]}
+    })
+else:
+    # Development: allow localhost
+    CORS(app, resources={
+        r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"]}
+    })
+
+# Request size limits
+app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024  # 25MB max for audio files
+
+# Error handler for request too large
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({
+        'error': 'Request payload too large (max 25MB)',
+        'code': 'PAYLOAD_TOO_LARGE'
+    }), 413
+
 
 # Initialize AssemblyAI client
 aai.settings.api_key = os.getenv('ASSEMBLYAI_API_KEY')
@@ -93,195 +116,6 @@ def health():
         'assemblyai_configured': os.getenv('ASSEMBLYAI_API_KEY') is not None
     }), 200
 
-@app.route('/transcribe', methods=['POST'])
-def transcribe():
-    """
-    Transcribe audio file using Whisper API
-    Expects: audio file in request.files['audio']
-    Returns: transcript text
-    """
-    try:
-        if 'audio' not in request.files:
-            return jsonify({'error': 'No audio file provided'}), 400
-        
-        audio_file = request.files['audio']
-        
-        # Send to Whisper API
-        transcript = openai_client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
-        )
-        
-        return jsonify({
-            'success': True,
-            'transcript': transcript.text
-        }), 200
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/extract', methods=['POST'])
-def extract_symptoms():
-    """
-    Extract symptoms and entities from transcript using spaCy
-    Expects: { 'transcript': 'text' }
-    Returns: { 'symptoms': [...], 'entities': {...} }
-    """
-    try:
-        if not nlp:
-            return jsonify({'error': 'spaCy model not loaded'}), 500
-        
-        data = request.json
-        transcript = data.get('transcript', '')
-        
-        if not transcript:
-            return jsonify({'error': 'No transcript provided'}), 400
-        
-        # Process with spaCy
-        doc = nlp(transcript)
-        
-        # Extract entities (symptoms, conditions, durations, etc.)
-        entities = {}
-        detected_symptoms = []
-        
-        for ent in doc.ents:
-            if ent.label_ not in entities:
-                entities[ent.label_] = []
-            entities[ent.label_].append({
-                'text': ent.text,
-                'label': ent.label_,
-                'start': ent.start_char,
-                'end': ent.end_char
-            })
-        
-        # Simple symptom detection from knowledge base
-        transcript_lower = transcript.lower()
-        for symptom_key in knowledge_base['symptoms'].keys():
-            symptom_display = symptom_key.replace('_', ' ')
-            if symptom_display in transcript_lower:
-                detected_symptoms.append(symptom_key)
-        
-        return jsonify({
-            'success': True,
-            'detected_symptoms': detected_symptoms,
-            'entities': entities,
-            'transcript': transcript
-        }), 200
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/gap-analysis', methods=['POST'])
-def gap_analysis():
-    """
-    Analyze gaps between detected symptoms and required diagnostic checks
-    Expects: { 'detected_symptoms': [...], 'covered_fields': {...} }
-    Returns: { 'gaps': [...], 'missing_checks': {...} }
-    """
-    try:
-        data = request.json
-        detected_symptoms = data.get('detected_symptoms', [])
-        covered_fields = data.get('covered_fields', {})
-        
-        gaps = {}
-        missing_checks_list = []
-        
-        for symptom in detected_symptoms:
-            if symptom in knowledge_base['symptoms']:
-                required = knowledge_base['symptoms'][symptom]['required_checks']
-                covered = covered_fields.get(symptom, [])
-                
-                missing = [check for check in required if check not in covered]
-                if missing:
-                    gaps[symptom] = missing
-                    missing_checks_list.extend(missing)
-        
-        return jsonify({
-            'success': True,
-            'gaps': gaps,
-            'missing_checks': list(set(missing_checks_list)),
-            'detected_symptoms': detected_symptoms
-        }), 200
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/generate-questions', methods=['POST'])
-def generate_questions():
-    """
-    Generate follow-up question suggestions using Gemini API
-    Expects: { 'detected_symptoms': [...], 'gaps': {...}, 'transcript': 'text' }
-    Returns: { 'questions': [...] }
-    """
-    try:
-        data = request.json
-        detected_symptoms = data.get('detected_symptoms', [])
-        gaps = data.get('gaps', {})
-        transcript = data.get('transcript', '')
-        
-        if not detected_symptoms or not gaps:
-            return jsonify({
-                'success': True,
-                'questions': ['Please provide more information about your symptoms']
-            }), 200
-        
-        # Construct prompt for Gemini
-        prompt = f"""You are a clinical assistant helping a doctor during a patient interview.
-
-Patient's reported symptoms: {', '.join([s.replace('_', ' ') for s in detected_symptoms])}
-
-Patient's transcript: "{transcript}"
-
-Critical diagnostic information still needed:
-{json.dumps(gaps, indent=2)}
-
-Generate exactly 3-5 important follow-up questions the doctor should ask to complete the diagnostic assessment. 
-Format each question on a new line, starting with a number (e.g., "1. Question here?").
-Focus on the most critical missing information.
-Be direct and clinical."""
-
-        # Call Gemini API
-        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
-        response = model.generate_content(prompt)
-        
-        # Parse response into questions
-        response_text = response.text
-        questions = []
-        
-        for line in response_text.strip().split('\n'):
-            line = line.strip()
-            if line and len(line) > 5:  # Filter out empty lines and too-short text
-                # Remove numbering if present
-                if line[0].isdigit() and '.' in line[:3]:
-                    line = line.split('.', 1)[1].strip()
-                if line:
-                    questions.append(line)
-        
-        # Ensure we have at least some questions
-        if not questions:
-            questions = ["What other symptoms are you experiencing?"]
-        
-        return jsonify({
-            'success': True,
-            'questions': questions[:5]  # Return max 5 questions
-        }), 200
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'questions': ['Unable to generate questions at this time']
-        }), 200  # Return 200 even on error so UI doesn't break
-
 @app.route('/process-interview', methods=['POST'])
 def process_interview():
     """
@@ -290,11 +124,23 @@ def process_interview():
     Returns: full analysis with suggestions
     """
     try:
+        # Input validation
         if 'audio' not in request.files:
-            return jsonify({'error': 'No audio file provided'}), 400
+            return jsonify({'error': 'No audio file provided', 'code': 'MISSING_AUDIO'}), 400
         
         audio_file = request.files['audio']
+        if not audio_file or audio_file.filename == '':
+            return jsonify({'error': 'Invalid audio file', 'code': 'INVALID_FILE'}), 400
+        
         audio_bytes = audio_file.read()
+        
+        # Validate file size (max 25MB for AssemblyAI)
+        if len(audio_bytes) > 25 * 1024 * 1024:
+            return jsonify({'error': 'Audio file too large (max 25MB)', 'code': 'FILE_TOO_LARGE'}), 413
+        
+        if len(audio_bytes) == 0:
+            return jsonify({'error': 'Audio file is empty', 'code': 'EMPTY_FILE'}), 400
+        
         audio_file.seek(0)
         
         # Step 1: Transcribe using AssemblyAI
