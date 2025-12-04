@@ -7,13 +7,14 @@ echo "🏥 AI Medical Interview Assistant - Setup Guide"
 echo "================================================"
 echo ""
 
-PROJECT_DIR="/Users/cherianmathew/Documents/Projects/HealthAI"
+# Get the project directory (where this script is located)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV="$PROJECT_DIR/.venv/bin"
 
 # Check if virtual environment exists
 if [ ! -f "$VENV/python" ]; then
     echo "❌ Virtual environment not found"
-    echo "Run: python3 -m venv /Users/cherianmathew/Documents/Projects/HealthAI/.venv"
+    echo "Run: python3 -m venv .venv"
     exit 1
 fi
 
@@ -59,12 +60,13 @@ echo "🚀 STEP 3: Run Backend"
 echo "───────────────────────────────"
 echo ""
 echo "In Terminal 1, run:"
-echo "  cd $PROJECT_DIR/backend"
-echo "  $VENV/python app.py"
+echo "  cd backend"
+echo "  source ../.venv/bin/activate"
+echo "  python app.py"
 echo ""
 echo "You should see:"
 echo "  ✓ spaCy model loaded (or ⚠ using keyword matching)"
-echo "  * Running on http://localhost:5000"
+echo "  * Running on http://127.0.0.1:3001"
 echo ""
 
 # Step 4: Run frontend
@@ -72,7 +74,7 @@ echo "💻 STEP 4: Run Frontend"
 echo "───────────────────────────────"
 echo ""
 echo "In Terminal 2, run:"
-echo "  cd $PROJECT_DIR/frontend"
+echo "  cd frontend"
 echo "  npm start"
 echo ""
 echo "Your browser should open http://localhost:3000"
@@ -98,11 +100,12 @@ echo "✅ STEP 6: Verify Installation"
 echo "───────────────────────────────"
 echo ""
 echo "Test backend imports:"
-$VENV/python -c "import flask; import openai; import google.generativeai; print('✓ All imports working')" && echo "" || { echo "❌ Import failed"; exit 1; }
+source $VENV/activate
+python -c "import flask; import google.generativeai; import assemblyai; print('✓ All imports working')" && echo "" || { echo "❌ Import failed"; exit 1; }
 
 echo ""
 echo "Backend API test:"
-echo "  curl http://localhost:5000/health"
+echo "  curl http://127.0.0.1:3001/health"
 echo ""
 
 echo "🎉 Ready to demo!"
