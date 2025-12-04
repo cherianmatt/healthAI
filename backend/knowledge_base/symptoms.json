@@ -1,0 +1,107 @@
+{
+  "symptoms": {
+    "headache": {
+      "required_checks": [
+        "onset_time",
+        "duration",
+        "severity_scale",
+        "location",
+        "neck_stiffness",
+        "photophobia",
+        "nausea",
+        "associated_fever"
+      ],
+      "description": "Head pain or discomfort"
+    },
+    "fever": {
+      "required_checks": [
+        "temperature",
+        "duration",
+        "onset_gradual_or_sudden",
+        "associated_symptoms",
+        "chills",
+        "sweating",
+        "recent_illness_exposure"
+      ],
+      "description": "Elevated body temperature"
+    },
+    "cough": {
+      "required_checks": [
+        "duration",
+        "dry_or_productive",
+        "phlegm_color",
+        "frequency",
+        "worse_at_time",
+        "associated_fever",
+        "associated_breathlessness",
+        "triggered_by"
+      ],
+      "description": "Involuntary expulsion of air from lungs"
+    },
+    "chest_pain": {
+      "required_checks": [
+        "onset_sudden_or_gradual",
+        "location_specific",
+        "severity_scale",
+        "radiation_pattern",
+        "associated_breathlessness",
+        "associated_sweating",
+        "relieving_factors",
+        "aggravating_factors"
+      ],
+      "description": "Pain or discomfort in chest area"
+    },
+    "sore_throat": {
+      "required_checks": [
+        "duration",
+        "severity_scale",
+        "difficulty_swallowing",
+        "associated_fever",
+        "associated_cough",
+        "white_patches_visible",
+        "swollen_lymph_nodes",
+        "recent_exposure"
+      ],
+      "description": "Pain in throat area"
+    },
+    "nausea": {
+      "required_checks": [
+        "duration",
+        "frequency",
+        "triggered_by",
+        "associated_vomiting",
+        "associated_diarrhea",
+        "recent_food_intake",
+        "associated_fever",
+        "abdominal_pain"
+      ],
+      "description": "Feeling of sickness in stomach"
+    },
+    "fatigue": {
+      "required_checks": [
+        "onset_acute_or_gradual",
+        "duration",
+        "severity_impact_on_daily_activities",
+        "associated_fever",
+        "associated_sleep_changes",
+        "recent_stress_or_travel",
+        "medication_changes",
+        "weight_changes"
+      ],
+      "description": "Extreme tiredness or lack of energy"
+    },
+    "shortness_of_breath": {
+      "required_checks": [
+        "onset_sudden_or_gradual",
+        "triggers",
+        "severity_at_rest_vs_activity",
+        "associated_chest_pain",
+        "associated_cough",
+        "associated_fever",
+        "recent_leg_swelling",
+        "history_of_heart_lung_disease"
+      ],
+      "description": "Difficulty breathing or feeling breathless"
+    }
+  }
+}
